@@ -117,7 +117,6 @@ import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
-import { createServer } from 'http'
 import { createHttpOrHttpsServer } from '../app'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
