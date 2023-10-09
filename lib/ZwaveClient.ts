@@ -117,6 +117,8 @@ import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
+import { createServer } from 'http'
+import { createHttpOrHttpsServer } from '../app'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -2252,9 +2254,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 
 				if (this.cfg.serverEnabled) {
-					this.server = new ZwavejsServer(this._driver, {
-						port: this.cfg.serverPort || 3000,
+					const httpServer = createHttpOrHttpsServer({
 						host: this.cfg.serverHost,
+						port: this.cfg.serverPort || 3000,
+					})
+					this.server = new ZwavejsServer(this._driver, {
+						httpServer: httpServer,
 						logger: LogManager.module('Z-Wave-Server'),
 						enableDNSServiceDiscovery:
 							!this.cfg.serverServiceDiscoveryDisabled,

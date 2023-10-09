@@ -166,18 +166,8 @@ let pluginsRouter: Router
 let restarting = false
 
 // ### UTILS
-
-/**
- * Start http/https server and all the manager
- */
-export async function startServer(host: string, port: number | string) {
-	let server: HttpServer
-
+export async function createHttpOrHttpsServer(options) {
 	const settings = jsonStore.get(store.settings)
-
-	// as the really first thing setup loggers so all logs will go to file if specified in settings
-	setupLogging(settings)
-
 	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
 
 	if (httpsEnabled) {
@@ -186,14 +176,10 @@ export async function startServer(host: string, port: number | string) {
 			const { cert, key } = await loadCertKey()
 
 			if (cert && key) {
-				server = createHttpsServer(
-					{
-						key,
-						cert,
-						rejectUnauthorized: false,
-					},
-					app
-				)
+				options.key = key
+				options.cert = cert
+				options.rejectUnauthorized = false
+				return createHttpsServer(options, app)
 			} else {
 				logger.warn(
 					'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP'
@@ -206,9 +192,21 @@ export async function startServer(host: string, port: number | string) {
 		}
 	}
 
-	if (!server) {
-		server = createHttpServer(app)
-	}
+	return createHttpServer(options, app)
+}
+
+/**
+ * Start http/https server and all the manager
+ */
+export async function startServer(host: string, port: number | string) {
+	const settings = jsonStore.get(store.settings)
+
+	// as the really first thing setup loggers so all logs will go to file if specified in settings
+	setupLogging(settings)
+
+	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
+
+	const server: HttpServer = await createHttpOrHttpsServer({})
 
 	server.listen(port as number, host, function () {
 		const addr = server.address()
